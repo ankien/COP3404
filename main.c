@@ -2,6 +2,58 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define HASHSIZE 200
+
+struct Node {
+    char* symbol;
+    unsigned int address;
+    unsigned int order;
+};
+
+struct Node* hashArray[HASHSIZE];
+
+unsigned int hashFunction(char** symbol) {
+    unsigned int hash = 0;
+    for(unsigned int i = 0; i < strlen(*symbol); i++) {
+        hash += *symbol[i];
+    }
+    return hash % HASHSIZE;
+}
+
+void insertNode(char** symbol, unsigned int* address, unsigned int* order) {
+    unsigned int index = hashFunction(*symbol);
+    struct Node* newNode = (struct Node*) malloc(sizeof(struct Node));
+    newNode->symbol = *symbol;
+    newNode->address = *address;
+    newNode->order = order;
+    while(!hashArray[index]) {
+        index = (index + 1) % HASHSIZE;
+    }
+    hashArray[index] = newNode;
+}
+
+struct Node* findNode(char** symbol) {
+    unsigned int index = hashFunction(*symbol);
+    while(hashArray[index]) {
+        if(strcmp(hashArray[index]->symbol, *symbol) == 0)
+            return hashArray[index];
+        index = (index + 1) % HASHSIZE;
+    }
+    return NULL;
+}
+
+void inOrderTraversal(unsigned int* count) {
+    struct Node* temp;
+    for(int i = 0; i < *count; i++) {
+        temp = findNode(*count);
+        printf("%s %X\n",temp->symbol,temp->address);
+    }
+}
+
+void printError(char** line,unsigned int *lineNumber, char* *error) {
+    printf("<%s>\nLine<%d><%s>",*line,*lineNumber,*error);
+}
+
 int main(unsigned int argc, char* argv[]) {
     /* SIC Specifications */
     /* Memory */
@@ -26,7 +78,7 @@ int main(unsigned int argc, char* argv[]) {
     // Test device(TD) instruction sets CC to test a device ID for I/O
 
     // Symbols cannot be defined with a name that matches a directive
-    // Symbols must start with alpha character
+    // Symbols must start with alpha character[A-Z]
     // Symbols cannot be longer than six characters
     // Symbols cannot contain spaces, $, !, =, +, -, (, ), @
     // # is a comment
@@ -42,20 +94,26 @@ int main(unsigned int argc, char* argv[]) {
         return 1;
     }
 
+    // Pass 1
     unsigned int locCounter = 0;
+    unsigned int address = 0;
+    unsigned int symbolCount = 0;
     char line[1024];
     while(fgets(line,1024,inputFile)) {
+        locCounter++;
         if(strlen(line) > 0) {
-            if(line[0] == 35); // comment case
-
-            if((line[0] >= 65) && (line[0] <= 90)); // symbol definition
+            if(line[0] == '#') // 5. comment case
+                continue;
             
-            char* token = strtok(line,"\l");
+            char* token = strtok(line," \t");
             while(token) {
-
+                
+                token = strtok(NULL," \t");
             }
         }
     }
+    inOrderTraversal(&symbolCount);
 
     fclose(inputFile);
+    return 0;
 }
