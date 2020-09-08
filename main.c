@@ -12,19 +12,19 @@ struct Node {
 
 struct Node* hashArray[HASHSIZE];
 
-unsigned int hashFunction(char** symbol) {
+unsigned int hashFunction(char* symbol) {
     unsigned int hash = 0;
-    for(unsigned int i = 0; i < strlen(*symbol); i++) {
-        hash += *symbol[i];
+    for(unsigned int i = 0; i < strlen(symbol); i++) {
+        hash += symbol[i];
     }
     return hash % HASHSIZE;
 }
 
-void insertNode(char** symbol, unsigned int* address, unsigned int* order) {
-    unsigned int index = hashFunction(*symbol);
+void insertNode(char* symbol, unsigned int address, unsigned int order) {
+    unsigned int index = hashFunction(symbol);
     struct Node* newNode = (struct Node*) malloc(sizeof(struct Node));
-    newNode->symbol = *symbol;
-    newNode->address = *address;
+    newNode->symbol = symbol;
+    newNode->address = address;
     newNode->order = order;
     while(!hashArray[index]) {
         index = (index + 1) % HASHSIZE;
@@ -32,26 +32,26 @@ void insertNode(char** symbol, unsigned int* address, unsigned int* order) {
     hashArray[index] = newNode;
 }
 
-struct Node* findNode(char** symbol) {
-    unsigned int index = hashFunction(*symbol);
+struct Node* findNode(char* symbol) {
+    unsigned int index = hashFunction(symbol);
     while(hashArray[index]) {
-        if(strcmp(hashArray[index]->symbol, *symbol) == 0)
+        if(strcmp(hashArray[index]->symbol, symbol) == 0)
             return hashArray[index];
         index = (index + 1) % HASHSIZE;
     }
     return NULL;
 }
 
-void inOrderTraversal(unsigned int* count) {
+void inOrderTraversal(unsigned int count) {
     struct Node* temp;
-    for(int i = 0; i < *count; i++) {
-        temp = findNode(*count);
+    for(int i = 0; i < count; i++) {
+        temp = findNode(count);
         printf("%s %X\n",temp->symbol,temp->address);
     }
 }
 
-void printError(char** line,unsigned int *lineNumber, char* *error) {
-    printf("<%s>\nLine<%d><%s>",*line,*lineNumber,*error);
+void printError(char* line,unsigned int lineNumber, char* error) {
+    printf("<%s>\nLine<%d><%s>\n",line,lineNumber,error);
 }
 
 int main(unsigned int argc, char* argv[]) {
@@ -95,24 +95,34 @@ int main(unsigned int argc, char* argv[]) {
     }
 
     // Pass 1
-    unsigned int locCounter = 0;
+    unsigned int lineCount = 0;
     unsigned int address = 0;
     unsigned int symbolCount = 0;
     char line[1024];
     while(fgets(line,1024,inputFile)) {
-        locCounter++;
+        lineCount++;
         if(strlen(line) > 0) {
+            
+
             if(line[0] == '#') // 5. comment case
                 continue;
-            
+
             char* token = strtok(line," \t");
+            if((line[0] >= 'A') && (line[0] <= 'Z')) { // 2. if there's a symbol
+                if(findNode(&token) == NULL) {
+                    printError(line,lineCount,"Duplicate symbol");
+                } else {
+                    insertNode(token,address,symbolCount++);
+                }
+            }
+            
             while(token) {
                 
-                token = strtok(NULL," \t");
+                token = strtok(NULL," \t"); // will be null or the next token
             }
         }
     }
-    inOrderTraversal(&symbolCount);
+    inOrderTraversal(symbolCount);
 
     fclose(inputFile);
     return 0;
