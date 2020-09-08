@@ -50,6 +50,15 @@ void inOrderTraversal(unsigned int count) {
     }
 }
 
+int stringHasSpecialChars(char* string) {
+    for(int i = 0; i < strlen(string); i++) {
+        if((string[i] == ' ') || (string[i] == '$') || (string[i] == '!') || (string[i] == '=') ||
+           (string[i] == '+') || (string[i] == '-') || (string[i] == '(') || (string[i] == ')') || (string[i] == '@'))
+            return 1;
+    }
+    return 0;
+}
+
 void printError(char* line,unsigned int lineNumber, char* error) {
     printf("<%s>\nLine<%d><%s>\n",line,lineNumber,error);
 }
@@ -102,15 +111,21 @@ int main(unsigned int argc, char* argv[]) {
     while(fgets(line,1024,inputFile)) {
         lineCount++;
         if(strlen(line) > 0) {
-            
-
-            if(line[0] == '#') // 5. comment case
+            if(line[0] == '#') // comment case
                 continue;
 
             char* token = strtok(line," \t");
-            if((line[0] >= 'A') && (line[0] <= 'Z')) { // 2. if there's a symbol
-                if(findNode(&token) == NULL) {
+            if((line[0] >= 'A') && (line[0] <= 'Z')) { // Read symbol
+                if(findNode(token) != NULL) {
                     printError(line,lineCount,"Duplicate symbol");
+                } else if((strcmp(token,"START") == 0 ) || (strcmp(token,"END") == 0 ) || (strcmp(token,"BYTE") == 0 ) ||
+                          (strcmp(token,"WORD") == 0 ) || (strcmp(token,"RESB") == 0 ) || (strcmp(token,"RESW") == 0 ) ||
+                          (strcmp(token,"RESR") == 0 ) || (strcmp(token,"EXPORTS") == 0 )) {
+                    printError(line,lineCount,"Symbol = directive name");
+                } else if(strlen(token) > 6) {
+                    printError(line,lineCount,"Symbol cannot be longer than 6 characters");
+                } else if(stringHasSpecialChars(token) != 0) {
+                    printError(line,lineCount,"Symbol cannot contain spaces, $, !, =, +, -, (, ), @");
                 } else {
                     insertNode(token,address,symbolCount++);
                 }
