@@ -3,11 +3,13 @@
 #include <string.h>
 #include <stdint.h>
 
-#pragma warning(disable : 4996)
+#ifdef _MSC_VER
+#pragma warning(disable : 4996) // For Visual Studio
+#endif
 
 struct Node {
     char* symbol;
-    uint16_t address;
+    uint32_t address;
 };
 
 #define HASHSIZE (32768U / sizeof(struct Node)) // 2^15 bytes / size of symbol + address
@@ -22,7 +24,7 @@ uint16_t hashFunction(char* symbol) {
     return (hash * 3) % HASHSIZE;
 }
 
-void insertNode(char* symbol, uint16_t address) {
+void insertNode(char* symbol, uint32_t address) {
     uint16_t index = hashFunction(symbol);
     struct Node* newNode = (struct Node*) malloc(sizeof(struct Node));
     newNode->symbol = (char*)malloc(strlen(symbol) + 1);
@@ -51,6 +53,16 @@ uint8_t stringHasSpecialChars(char* string) {
             return 1;
     }
     return 0;
+}
+
+char* removeNewLine(char* string) {
+    char* temp = (char*)malloc(strlen(string) + 1);
+    strcpy(temp,string);
+    for(uint64_t i = 0; temp[i] != '\0'; i++) {
+        if(temp[i] == '\n')
+            temp[i]='\0';
+    }
+    return temp;
 }
 
 uint8_t checkIfOpcode(char* string) { // Better performance could be achieved if you switched on the first character of the string
@@ -119,9 +131,12 @@ int8_t main(uint8_t argc, char* argv[]) {
 
     // Pass 1
     uint64_t lineCount = 0;
-    uint16_t address = 0;
-    char symbol[6];
-    uint8_t symbolFlag = 0;
+    uint32_t address = 0;
+    char symbol[7];
+    struct {
+        uint8_t symbolFlag : 1;
+    } Flags;
+    Flags.symbolFlag = 0;
     char line[1024];
     while(fgets(line,1024,inputFile)) {
         lineCount++;
@@ -147,18 +162,20 @@ int8_t main(uint8_t argc, char* argv[]) {
                     return 1;
                 } else {
                     strcpy(symbol,token);
-                    symbolFlag = 1;
+                    Flags.symbolFlag = 1;
                 }
             }
             
             while(token) {
                 if(strcmp(token, "START") == 0) {
-                    address = atoi(strtok(NULL," \t"));
+                    char* temp = strtok(NULL," \t");
+                    address = (uint32_t)strtol(temp,NULL,16);
                     break;
                 }
 
-                if(checkIfOpcode(token) == 0) {
+                if((checkIfOpcode(removeNewLine(token)) == 0) && (lineCount > 2)) {
                     address+=3;
+                    break;
                 } else if(strcmp(token, "WORD") == 0) {
                     address+=3;
                 } else if(strcmp(token, "RESW") == 0) {
@@ -182,16 +199,16 @@ int8_t main(uint8_t argc, char* argv[]) {
                     }
                 } else if(strcmp(token, "END") == 0) {
                     goto endPass1;
-                } else if(symbolFlag != 1) {
+                } else if(Flags.symbolFlag != 1) {
                     printError(line,lineCount,"Invalid operation code");
                     return 1;
                 }
                 token = strtok(NULL," \t"); // will be null or the next token
             }
-            if(symbolFlag == 1) {
+            if(Flags.symbolFlag == 1) {
                 insertNode(symbol,address);
                 printf("%s %X\n",symbol,address);
-                symbolFlag = 0;
+                Flags.symbolFlag = 0;
             } // print symbol and the address it's located at
         } else {
             printError(line,lineCount,"Empty line");
