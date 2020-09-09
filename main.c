@@ -138,7 +138,15 @@ int8_t main(uint8_t argc, char* argv[]) {
     } Flags;
     Flags.symbolFlag = 0;
     char line[1024];
+    char nonNullTerminatedStringString[1024];
     while(fgets(line,1024,inputFile)) {
+        strcpy(nonNullTerminatedStringString,line);
+        for(uint64_t i = 0; i < strlen(line); i++) {
+            if(nonNullTerminatedStringString[i] == '\0')
+                nonNullTerminatedStringString[i]=' ';
+            if(nonNullTerminatedStringString[i] == '\n')
+                nonNullTerminatedStringString[i]='\0';
+        }
         lineCount++;
         if(strlen(line) > 0) {
             if(line[0] == '#') // comment case
@@ -173,8 +181,10 @@ int8_t main(uint8_t argc, char* argv[]) {
                     break;
                 }
 
-                if((checkIfOpcode(removeNewLine(token)) == 0) && (lineCount > 2)) {
+                char* newLinelessToken = removeNewLine(token);
+                if((checkIfOpcode(newLinelessToken) == 0) && (lineCount > 2)) {
                     address+=3;
+                    free(newLinelessToken);
                     break;
                 } else if(strcmp(token, "WORD") == 0) {
                     address+=3;
@@ -200,7 +210,7 @@ int8_t main(uint8_t argc, char* argv[]) {
                 } else if(strcmp(token, "END") == 0) {
                     goto endPass1;
                 } else if(Flags.symbolFlag != 1) {
-                    printError(line,lineCount,"Invalid operation code");
+                    printError(nonNullTerminatedStringString,lineCount,"Invalid operation code");
                     return 1;
                 }
                 token = strtok(NULL," \t"); // will be null or the next token
