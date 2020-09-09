@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#pragma warning(disable : 4996)
+
 struct Node {
     char* symbol;
     uint16_t address;
@@ -17,7 +19,7 @@ uint16_t hashFunction(char* symbol) {
     for(uint64_t i = 0; i < strlen(symbol); i++) {
         hash += symbol[i];
     }
-    return (hash * HASHSIZE) % HASHSIZE;
+    return (hash * 3) % HASHSIZE;
 }
 
 void insertNode(char* symbol, uint16_t address) {
@@ -26,7 +28,7 @@ void insertNode(char* symbol, uint16_t address) {
     newNode->symbol = (char*)malloc(strlen(symbol) + 1);
     strcpy(newNode->symbol,symbol);
     newNode->address = address;
-    while(!hashArray[index]) {
+    while(hashArray[index] != NULL) {
         index = (index + 1) % HASHSIZE;
     }
     hashArray[index] = newNode;
@@ -43,7 +45,7 @@ struct Node* findNode(char* symbol) {
 }
 
 uint8_t stringHasSpecialChars(char* string) {
-    for(int i = 0; i < strlen(string); i++) {
+    for(uint64_t i = 0; i < strlen(string); i++) {
         if((string[i] == ' ') || (string[i] == '$') || (string[i] == '!') || (string[i] == '=') ||
            (string[i] == '+') || (string[i] == '-') || (string[i] == '(') || (string[i] == ')') || (string[i] == '@'))
             return 1;
@@ -72,7 +74,7 @@ uint8_t checkIfOpcode(char* string) { // Better performance could be achieved if
 }
 
 void printError(char* line,uint64_t lineNumber, char* error) {
-    printf("<%s>\nLine<%u><%s>\n",line,lineNumber,error);
+    printf("<%s>\nLine<%llu><%s>\n",line,lineNumber,error);
 }
 
 int8_t main(uint8_t argc, char* argv[]) {
@@ -105,7 +107,7 @@ int8_t main(uint8_t argc, char* argv[]) {
     // # is a comment
 
     if(argc != 2) {
-        printf("Use %s with <filename>",argv[0]);
+        printf("Use %s with <filename>\n",argv[0]);
         return 1;
     }
 
@@ -146,7 +148,6 @@ int8_t main(uint8_t argc, char* argv[]) {
                 } else {
                     strcpy(symbol,token);
                     symbolFlag = 1;
-                    insertNode(token,address);
                 }
             }
             
@@ -154,29 +155,50 @@ int8_t main(uint8_t argc, char* argv[]) {
                 if(strcmp(token, "START") == 0) {
                     address = atoi(strtok(NULL," \t"));
                     break;
-                } else {
-                    address = 0;
                 }
 
                 if(checkIfOpcode(token) == 0) {
-                    
-                } else if() {
-                    
-                } else {
+                    address+=3;
+                } else if(strcmp(token, "WORD") == 0) {
+                    address+=3;
+                } else if(strcmp(token, "RESW") == 0) {
+                    address+= (3*atoi(strtok(NULL," \t")));
+                } else if(strcmp(token, "RESB") == 0) {
+                    address+= atoi(strtok(NULL," \t"));
+                } else if(strcmp(token, "BYTE") == 0) {
+                    char* byteString = strtok(NULL," \t");
+                    switch(byteString[0]) {
+                        case 'C':
+                            for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i++)
+                                address+=1;
+                            break;
+                        case 'X':
+                            for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i+=2)
+                                address+=1;
+                            break;
+                        default:
+                            printError(line,lineCount,"Invalid type of byte constant");
+                            return 1;
+                    }
+                } else if(strcmp(token, "END") == 0) {
+                    goto endPass1;
+                } else if(symbolFlag != 1) {
                     printError(line,lineCount,"Invalid operation code");
                     return 1;
                 }
-
                 token = strtok(NULL," \t"); // will be null or the next token
             }
-
-            if(symbolFlag == 1) { printf("%s %X\n",symbol,address); symbolFlag = 0; } // print symbol and the address it's located at
+            if(symbolFlag == 1) {
+                insertNode(symbol,address);
+                printf("%s %X\n",symbol,address);
+                symbolFlag = 0;
+            } // print symbol and the address it's located at
         } else {
             printError(line,lineCount,"Empty line");
             return 1;
         }
     }
-
+    endPass1:
     fclose(inputFile);
     return 0;
 }
