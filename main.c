@@ -55,14 +55,11 @@ uint8_t stringHasSpecialChars(char* string) {
     return 0;
 }
 
-char* removeNewLine(char* string) {
-    char* temp = (char*)malloc(strlen(string) + 1);
-    strcpy(temp,string);
-    for(uint64_t i = 0; temp[i] != '\0'; i++) {
-        if(temp[i] == '\n')
-            temp[i]='\0';
+void removeNewLine(char* string) {
+    for(uint64_t i = 0; string[i] != '\0'; i++) {
+        if(string[i] == '\n')
+            string[i]='\0';
     }
-    return temp;
 }
 
 uint8_t checkIfOpcode(char* string) { // Better performance could be achieved if you switched on the first character of the string
@@ -135,8 +132,10 @@ int8_t main(uint8_t argc, char* argv[]) {
     char symbol[7];
     struct {
         uint8_t symbolFlag : 1;
+        uint8_t startFlag : 1;
     } Flags;
     Flags.symbolFlag = 0;
+    Flags.startFlag = 0;
     char line[1024];
     char nonNullTerminatedStringString[1024];
     while(fgets(line,1024,inputFile)) {
@@ -144,7 +143,7 @@ int8_t main(uint8_t argc, char* argv[]) {
         for(uint64_t i = 0; i < strlen(line); i++) {
             if(nonNullTerminatedStringString[i] == '\0')
                 nonNullTerminatedStringString[i]=' ';
-            if(nonNullTerminatedStringString[i] == '\n')
+            else if(nonNullTerminatedStringString[i] == '\n')
                 nonNullTerminatedStringString[i]='\0';
         }
         lineCount++;
@@ -173,25 +172,39 @@ int8_t main(uint8_t argc, char* argv[]) {
                     Flags.symbolFlag = 1;
                 }
             }
-            
+
             while(token) {
                 if(strcmp(token, "START") == 0) {
                     char* temp = strtok(NULL," \t");
                     address = (uint32_t)strtol(temp,NULL,16);
+                    insertNode(symbol, address);
+                    printf("%s %X\n", symbol, address);
+                    Flags.symbolFlag = 0;
+                    Flags.startFlag = 1;
                     break;
                 }
 
-                char* newLinelessToken = removeNewLine(token);
-                if((checkIfOpcode(newLinelessToken) == 0) && (lineCount > 2)) {
+                if((Flags.symbolFlag == 1) && (Flags.startFlag == 1)) {
+                    insertNode(symbol, address);
+                    printf("%s %X\n", symbol, address);
+                } // print symbol and the address it's located at
+
+                char* newLinelessToken = (char*)malloc(strlen(token) + 1);
+                strcpy(newLinelessToken,token);
+                removeNewLine(newLinelessToken);
+                if(checkIfOpcode(newLinelessToken) == 0) {
                     address+=3;
                     free(newLinelessToken);
                     break;
                 } else if(strcmp(token, "WORD") == 0) {
                     address+=3;
+                    break;
                 } else if(strcmp(token, "RESW") == 0) {
                     address+= (3*atoi(strtok(NULL," \t")));
+                    break;
                 } else if(strcmp(token, "RESB") == 0) {
                     address+= atoi(strtok(NULL," \t"));
+                    break;
                 } else if(strcmp(token, "BYTE") == 0) {
                     char* byteString = strtok(NULL," \t");
                     switch(byteString[0]) {
@@ -213,13 +226,10 @@ int8_t main(uint8_t argc, char* argv[]) {
                     printError(nonNullTerminatedStringString,lineCount,"Invalid operation code");
                     return 1;
                 }
+                Flags.symbolFlag = 0;
                 token = strtok(NULL," \t"); // will be null or the next token
             }
-            if(Flags.symbolFlag == 1) {
-                insertNode(symbol,address);
-                printf("%s %X\n",symbol,address);
-                Flags.symbolFlag = 0;
-            } // print symbol and the address it's located at
+            
         } else {
             printError(line,lineCount,"Empty line");
             return 1;
