@@ -179,6 +179,8 @@ int8_t main(uint8_t argc, char* argv[]) {
                 if(strcmp(token, "START") == 0) {
                     char* temp = strtok(NULL," \t");
                     address = (uint32_t)strtol(temp,NULL,16);
+                    if((address < 0) || (address >= 32768))
+                        printError(line,lineCount,"Invalid starting memory address");
                     insertNode(symbol, address);
                     printf("%s %X\n", symbol, address);
                     Flags.symbolFlag = 0;
@@ -197,15 +199,23 @@ int8_t main(uint8_t argc, char* argv[]) {
                 if(checkIfOpcode(newLinelessToken) == 0) {
                     address+=3;
                     free(newLinelessToken);
+                    if(address >= 32768)
+                        printError(line,lineCount,"Out of memory");
                     break;
                 } else if(strcmp(token, "WORD") == 0) {
                     address+=3;
+                    if(address >= 32768)
+                        printError(line,lineCount,"Out of memory");
                     break;
                 } else if(strcmp(token, "RESW") == 0) {
                     address+= (3*atoi(strtok(NULL," \t")));
+                    if(address >= 32768)
+                        printError(line,lineCount,"Out of memory");
                     break;
                 } else if(strcmp(token, "RESB") == 0) {
                     address+= atoi(strtok(NULL," \t"));
+                    if(address >= 32768)
+                        printError(line,lineCount,"Out of memory");
                     break;
                 } else if(strcmp(token, "BYTE") == 0) {
                     char* byteString = strtok(NULL," \t");
@@ -213,10 +223,14 @@ int8_t main(uint8_t argc, char* argv[]) {
                         case 'C':
                             for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i++)
                                 address+=1;
+                            if(address >= 32768)
+                                printError(line,lineCount,"Out of memory");
                             break;
                         case 'X':
                             for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i+=2)
                                 address+=1;
+                            if(address >= 32768)
+                                printError(line,lineCount,"Out of memory");
                             break;
                         default:
                             printError(line,lineCount,"Invalid type of byte constant");

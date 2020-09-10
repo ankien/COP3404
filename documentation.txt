@@ -8,3 +8,4 @@ My hash function works by adding up the ASCII values of all characters in a stri
 I don't think there was anything I forgot to implement on this project,
 I made sure to free the memory aside from the chunks allocated for the hashtable, since that memory may be used in Pass 2 and beyond.
 I've handled all 4 symbol-specific error cases as well as the cases for; empty lines, invalid opcodes, and invalid byte constants.
+I also check for whether the starting memory address is invalid or if an address is out of range from max memory (2^15 bytes)
