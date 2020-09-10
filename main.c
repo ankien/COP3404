@@ -59,6 +59,8 @@ void removeNewLine(char* string) {
     for(uint64_t i = 0; string[i] != '\0'; i++) {
         if(string[i] == '\n')
             string[i]='\0';
+        else if(string[i] == '\r')
+            string[i]='\0';
     }
 }
 

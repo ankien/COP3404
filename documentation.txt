@@ -1,0 +1,10 @@
+Pass 1 documentation:
+I completed all the requirements of the project accurately to my knowledge.
+My Pass 1 of the SIC Assembler works in this order; read token > write to stdout > increment address > read next line;
+with the exception of the START token.
+All the symbols along with their addresses are stored in a hashtable which I've verified works using Visual Studio variable watch.
+My hash function works by adding up the ASCII values of all characters in a string and multiplying that sum by 3 (to reduce collisions).
+
+I don't think there was anything I forgot to implement on this project,
+I made sure to free the memory aside from the chunks allocated for the hashtable, since that memory may be used in Pass 2 and beyond.
+I've handled all 4 symbol-specific error cases as well as the cases for; empty lines, invalid opcodes, and invalid byte constants.
