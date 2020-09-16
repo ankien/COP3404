@@ -146,6 +146,18 @@
     <Text Include="documentation.txt" />
     <Text Include="Example1.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="test1.sic" />
+    <None Include="test10.sic" />
+    <None Include="test2.sic" />
+    <None Include="test3.sic" />
+    <None Include="test4.sic" />
+    <None Include="test5.sic" />
+    <None Include="test6.sic" />
+    <None Include="test7.sic" />
+    <None Include="test8.sic" />
+    <None Include="test9.sic" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

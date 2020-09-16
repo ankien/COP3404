@@ -9,10 +9,10 @@
 
 struct Node {
     char* symbol;
-    uint32_t address;
+    uint16_t address;
 };
 
-#define HASHSIZE (32768U / sizeof(struct Node)) // 2^15 bytes / size of symbol + address
+#define HASHSIZE 8000 // 2^15 bytes, or 32768 = 8000 in hex
 
 struct Node* hashArray[HASHSIZE];
 
@@ -24,7 +24,7 @@ uint16_t hashFunction(char* symbol) {
     return (hash * 3) % HASHSIZE;
 }
 
-void insertNode(char* symbol, uint32_t address) {
+void insertNode(char* symbol, uint16_t address) {
     uint16_t index = hashFunction(symbol);
     struct Node* newNode = (struct Node*) malloc(sizeof(struct Node));
     newNode->symbol = (char*)malloc(strlen(symbol) + 1);
@@ -84,6 +84,18 @@ uint8_t checkIfOpcode(char* string) { // Better performance could be achieved if
     return 1;
 }
 
+uint8_t checkIfDirective(char* string) {
+    if((strcmp(string,"START") == 0 ) || (strcmp(string,"END") == 0 ) || (strcmp(string,"BYTE") == 0 ) ||
+       (strcmp(string,"WORD") == 0 ) || (strcmp(string,"RESB") == 0 ) || (strcmp(string,"RESW") == 0 ) ||
+       (strcmp(string,"RESR") == 0 ) || (strcmp(string,"EXPORTS") == 0 ))
+        return 0;
+    return 1;
+}
+
+uint8_t checkIfConstant() {
+
+}
+
 void printError(char* line,uint64_t lineNumber, char* error) {
     printf("<%s>\nLine<%llu><%s>\n",line,lineNumber,error);
 }
@@ -130,16 +142,19 @@ int8_t main(uint8_t argc, char* argv[]) {
 
     // Pass 1
     uint64_t lineCount = 0;
-    uint32_t address = 0;
+    uint16_t address = 0;
     char symbol[7];
     struct {
-        uint8_t symbolFlag : 1;
-        uint8_t startFlag : 1;
+        uint8_t symbolFlag : 1; // this token is a symbol
+        uint8_t startFlag : 1; // the program has started
+        uint8_t endFlag : 1; // there's an end
     } Flags;
     Flags.symbolFlag = 0;
     Flags.startFlag = 0;
+    Flags.endFlag = 0;
     char line[1024];
     char nonNullTerminatedStringString[1024];
+
     while(fgets(line,1024,inputFile)) {
         strcpy(nonNullTerminatedStringString,line);
         for(uint64_t i = 0; i < strlen(line); i++) {
@@ -148,26 +163,26 @@ int8_t main(uint8_t argc, char* argv[]) {
             else if(nonNullTerminatedStringString[i] == '\n')
                 nonNullTerminatedStringString[i]='\0';
         }
+
         lineCount++;
-        if(strlen(line) > 0) {
+
+        if(strlen(line) > 1) {
             if(line[0] == '#') // comment case
                 continue;
 
             char* token = strtok(line," \t");
             if((line[0] >= 'A') && (line[0] <= 'Z')) { // Read symbol
                 if(findNode(token) != NULL) {
-                    printError(line,lineCount,"Duplicate symbol");
+                    printError(nonNullTerminatedStringString,lineCount,"Duplicate symbol");
                     return 1;
-                } else if((strcmp(token,"START") == 0 ) || (strcmp(token,"END") == 0 ) || (strcmp(token,"BYTE") == 0 ) ||
-                          (strcmp(token,"WORD") == 0 ) || (strcmp(token,"RESB") == 0 ) || (strcmp(token,"RESW") == 0 ) ||
-                          (strcmp(token,"RESR") == 0 ) || (strcmp(token,"EXPORTS") == 0 )) {
-                    printError(line,lineCount,"Symbol = directive name");
+                } else if(checkIfDirective(token) == 0) {
+                    printError(nonNullTerminatedStringString,lineCount,"Symbol = directive name");
                     return 1;
                 } else if(strlen(token) > 6) {
-                    printError(line,lineCount,"Symbol cannot be longer than 6 characters");
+                    printError(nonNullTerminatedStringString,lineCount,"Symbol cannot be longer than 6 characters");
                     return 1;
                 } else if(stringHasSpecialChars(token) != 0) {
-                    printError(line,lineCount,"Symbol cannot contain spaces, $, !, =, +, -, (, ), @");
+                    printError(nonNullTerminatedStringString,lineCount,"Symbol cannot contain spaces, $, !, =, +, -, (, ), @");
                     return 1;
                 } else {
                     strcpy(symbol,token);
@@ -178,9 +193,26 @@ int8_t main(uint8_t argc, char* argv[]) {
             while(token) {
                 if(strcmp(token, "START") == 0) {
                     char* temp = strtok(NULL," \t");
-                    address = (uint32_t)strtol(temp,NULL,16);
-                    if(address < 0)
-                        printError(line,lineCount,"Invalid starting memory address");
+
+                    if(Flags.symbolFlag == 0) {
+                        printError(nonNullTerminatedStringString,lineCount,"Missing symbol for START");
+                        return 1;
+                    }
+
+                    if(temp == NULL) {
+                        printError(nonNullTerminatedStringString,lineCount,"No argument provided for START");
+                        return 1;
+                    }
+
+                    int64_t startAddress = (uint32_t)strtol(temp,NULL,16);
+
+                    if((startAddress >= 32768) || (startAddress < 0)) {
+                        printError(nonNullTerminatedStringString,lineCount,"Invalid START address");
+                        return 1;
+                    } else {
+                        address = startAddress;
+                    }
+
                     insertNode(symbol, address);
                     printf("%s %X\n", symbol, address);
                     Flags.symbolFlag = 0;
@@ -188,10 +220,16 @@ int8_t main(uint8_t argc, char* argv[]) {
                     break;
                 }
 
+                if((Flags.startFlag == 0) && Flags.symbolFlag == 0) {
+                    printError(nonNullTerminatedStringString,lineCount,"Missing START");
+                    return 1;
+                }
+                
+                // print symbol and the address it's located at
                 if((Flags.symbolFlag == 1) && (Flags.startFlag == 1)) {
                     insertNode(symbol, address);
                     printf("%s %X\n", symbol, address);
-                } // print symbol and the address it's located at
+                }
 
                 char* newLinelessToken = (char*)malloc(strlen(token) + 1);
                 strcpy(newLinelessToken,token);
@@ -199,47 +237,132 @@ int8_t main(uint8_t argc, char* argv[]) {
                 if(checkIfOpcode(newLinelessToken) == 0) {
                     address+=3;
                     free(newLinelessToken);
+                    if(address > 32768) {
+                        printError(nonNullTerminatedStringString,lineCount,"Out of memory");
+                        return 1;
+                    }
                     break;
-                } else if(strcmp(token, "WORD") == 0) {
-                    address+=3;
+                } else {
+                    if((Flags.symbolFlag == 0) &&
+                       (checkIfDirective(newLinelessToken) == 1) &&
+                       (strcmp(token,"\n") != 0) &&
+                       (strcmp(token,"\r") != 0)) {
+                        printError(nonNullTerminatedStringString,lineCount,"Invalid instruction");
+                        return 1;
+                    }
+                    free(newLinelessToken);
+                } 
+                
+                if(strcmp(token, "WORD") == 0) {
+                    char* temp = strtok(NULL," \t");
+                    if(atoi(temp) > 16777216) { // 2^24 Word size
+                        printError(nonNullTerminatedStringString,lineCount,"Word constant too large");
+                        return 1;
+                    }
+                    if(temp != NULL) {
+                        address+=3;
+                        if(address > 32768) {
+                            printError(nonNullTerminatedStringString,lineCount,"Out of memory");
+                            return 1;
+                        }
+                    } else {
+                        printError(nonNullTerminatedStringString,lineCount,"No argument provided for WORD");
+                        return 1;
+                    }
                     break;
                 } else if(strcmp(token, "RESW") == 0) {
-                    address+= (3*atoi(strtok(NULL," \t")));
+                    char* temp = strtok(NULL," \t");
+                    if(temp != NULL) {
+                        address+= (3*atoi(temp));
+                        if(address > 32768) {
+                            printError(nonNullTerminatedStringString,lineCount,"Out of memory");
+                            return 1;
+                        }
+                    } else {
+                        printError(nonNullTerminatedStringString,lineCount,"No argument provided for RESW");
+                        return 1;
+                    }
                     break;
                 } else if(strcmp(token, "RESB") == 0) {
-                    address+= atoi(strtok(NULL," \t"));
+                    char* temp = strtok(NULL," \t");
+                    if(temp != NULL) {
+                        address+= atoi(temp);
+                        if(address > 32768) {
+                            printError(nonNullTerminatedStringString,lineCount,"Out of memory");
+                            return 1;
+                        }
+                    } else {
+                        printError(nonNullTerminatedStringString,lineCount,"No argument provided for RESB");
+                        return 1;
+                    }
                     break;
                 } else if(strcmp(token, "BYTE") == 0) {
-                    char* byteString = strtok(NULL," \t");
+                    char* byteString = strtok(NULL,"\t");
+                    if(byteString == NULL) {
+                        printError(nonNullTerminatedStringString,lineCount,"No argument provided for BYTE");
+                        return 1;
+                    }
                     switch(byteString[0]) {
                         case 'C':
-                            for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i++)
-                                address+=1;
+                            for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i++) {
+                                if((byteString[i] >= 0) && (byteString[i] < 256)) {
+                                    address+=1;
+                                    if(address > 32768) {
+                                        printError(nonNullTerminatedStringString,lineCount,"Out of memory");
+                                        return 1;
+                                    }
+                                } else {
+                                    printError(nonNullTerminatedStringString,lineCount,"Invalid char constant");
+                                    return 1;
+                                }
+                            }
                             break;
                         case 'X':
-                            for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i+=2)
-                                address+=1;
+                            for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i++) {
+                                if(strchr("0123456789abcdefABCDEF", byteString[i]) != NULL) {
+                                    if((i % 2) == 1) {
+                                        address+=1;
+                                        if(address > 32768) {
+                                            printError(nonNullTerminatedStringString,lineCount,"Out of memory");
+                                            return 1;
+                                        }
+                                    }
+                                } else {
+                                    printError(nonNullTerminatedStringString,lineCount,"Invalid hex constant");
+                                    return 1;
+                                }
+                            }
                             break;
                         default:
-                            printError(line,lineCount,"Invalid type of byte constant");
+                            printError(nonNullTerminatedStringString,lineCount,"Invalid type of byte constant");
                             return 1;
                     }
-                } else if(strcmp(token, "END") == 0) {
-                    goto endPass1;
-                } else if(Flags.symbolFlag != 1) {
-                    printError(nonNullTerminatedStringString,lineCount,"Invalid operation code");
+                } else if(strcmp(token,"START") == 0) {
+                    printError(nonNullTerminatedStringString,lineCount,"Duplicate START");
                     return 1;
+                } else if(strcmp(token, "END") == 0) {
+                    char* temp = strtok(NULL," \t");
+                    if(temp == NULL) {
+                        printError(nonNullTerminatedStringString,lineCount,"No argument provided for END");
+                        return 1;
+                    }
+                    if(Flags.endFlag != 1)
+                        Flags.endFlag = 1;
+                    else
+                        printError(nonNullTerminatedStringString,lineCount,"Duplicate END");
+                        return 1;
                 }
-                Flags.symbolFlag = 0;
+                if(Flags.startFlag)
+                    Flags.symbolFlag = 0;
                 token = strtok(NULL," \t"); // will be null or the next token
             }
             
         } else {
-            printError(line,lineCount,"Empty line");
+            printError(nonNullTerminatedStringString,lineCount,"Empty line");
             return 1;
         }
     }
-    endPass1:
+
     fclose(inputFile);
     return 0;
 }
