@@ -166,10 +166,10 @@ int8_t main(uint8_t argc, char* argv[]) {
 
         lineCount++;
 
-        if(strlen(line) > 1) {
-            if(line[0] == '#') // comment case
-                continue;
+        if(line[0] == '#') // comment case
+            continue;
 
+        if(strlen(line) > 2) {
             char* token = strtok(line," \t");
             if((line[0] >= 'A') && (line[0] <= 'Z')) { // Read symbol
                 if(findNode(token) != NULL) {
@@ -245,8 +245,8 @@ int8_t main(uint8_t argc, char* argv[]) {
                 } else {
                     if((Flags.symbolFlag == 0) &&
                        (checkIfDirective(newLinelessToken) == 1) &&
-                       (strcmp(token,"\n") != 0) &&
-                       (strcmp(token,"\r") != 0)) {
+                       (token[0] != '\n') &&
+                       (token[0] != '\r')) {
                         printError(nonNullTerminatedStringString,lineCount,"Invalid instruction");
                         return 1;
                     }
@@ -255,8 +255,8 @@ int8_t main(uint8_t argc, char* argv[]) {
                 
                 if(strcmp(token, "WORD") == 0) {
                     char* temp = strtok(NULL," \t");
-                    if(atoi(temp) > 16777216) { // 2^24 Word size
-                        printError(nonNullTerminatedStringString,lineCount,"Word constant too large");
+                    if((atoi(temp) > 8388607) || (atoi(temp) < -8388608)) { // 2^24 Word size
+                        printError(nonNullTerminatedStringString,lineCount,"Word constant is invalid");
                         return 1;
                     }
                     if(temp != NULL) {
