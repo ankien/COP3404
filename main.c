@@ -100,7 +100,7 @@ void printError(char* line,uint64_t lineNumber, char* error) {
     printf("<%s>\nLine<%llu><%s>\n",line,lineNumber,error);
 }
 
-int8_t main(uint8_t argc, char* argv[]) {
+int main(uint8_t argc, char* argv[]) {
     /* SIC Specifications */
     /* Memory */
     // 8-bit bytes, 3-byte words, 32K byte limit (2^15 bytes)
@@ -348,9 +348,10 @@ int8_t main(uint8_t argc, char* argv[]) {
                     }
                     if(Flags.endFlag != 1)
                         Flags.endFlag = 1;
-                    else
+                    else {
                         printError(nonNullTerminatedStringString,lineCount,"Duplicate END");
                         return 1;
+                    }
                 }
                 if(Flags.startFlag)
                     Flags.symbolFlag = 0;
