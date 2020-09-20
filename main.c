@@ -12,7 +12,7 @@ struct Node {
     uint16_t address;
 };
 
-#define HASHSIZE 8000 // 2^15 bytes, or 32768 = 8000 in hex
+#define HASHSIZE 32768 // 2^15 bytes / possible symbol locations
 
 struct Node* hashArray[HASHSIZE];
 
@@ -169,7 +169,7 @@ int main(uint8_t argc, char* argv[]) {
         if(line[0] == '#') // comment case
             continue;
 
-        if(strlen(line) > 2) {
+        if(strlen(line) > 2) { // I guess, alternatively you could take the first token and check if it's null
             char* token = strtok(line," \t");
             if((line[0] >= 'A') && (line[0] <= 'Z')) { // Read symbol
                 if(findNode(token) != NULL) {
@@ -365,5 +365,8 @@ int main(uint8_t argc, char* argv[]) {
     }
 
     fclose(inputFile);
+
+    // Pass 2
+    lineCount = 0;
     return 0;
 }
