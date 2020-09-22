@@ -143,17 +143,13 @@ int main(uint8_t argc, char* argv[]) {
     // Pass 1
     uint64_t lineCount = 0;
     uint16_t address = 0;
-    char symbol[7];
     struct {
-        uint8_t symbolFlag : 1; // this token is a symbol
-        uint8_t startFlag : 1; // the program has started
-        uint8_t endFlag : 1; // there's an end
+        uint8_t symbolFlag : 1, // this token is a symbol
+                startFlag : 1, // the program has started
+                endFlag : 1; // there's an end
     } Flags;
-    Flags.symbolFlag = 0;
-    Flags.startFlag = 0;
-    Flags.endFlag = 0;
-    char line[1024];
-    char nonNullTerminatedStringString[1024];
+    Flags.symbolFlag = 0, Flags.startFlag = 0, Flags.endFlag = 0;
+    char symbol[7], line[1024], nonNullTerminatedStringString[1024];
 
     while(fgets(line,1024,inputFile)) {
         strcpy(nonNullTerminatedStringString,line);
@@ -365,9 +361,9 @@ int main(uint8_t argc, char* argv[]) {
     }
 
     // Pass 2
-    Flags.startFlag = 0;
-    lineCount = 0;
+    Flags.startFlag = 0, lineCount = 0;
     rewind(inputFile);
+    uint16_t currentAddress = 0;
     char* outputFilename = strcat(strtok(argv[1],"."),".obj");
     FILE* outputFile = fopen(outputFilename,"w");
     
@@ -377,15 +373,20 @@ int main(uint8_t argc, char* argv[]) {
             continue;
 
         if((line[0] >= 'A') && (line[0] <= 'Z')) {
-            char* token = strtok(line," \t");
+            char* token = strtok(line," \t"), directAddressingFlag = strtok(line,",");
             struct Node* node = findNode(token);
+
+            /*
+            if(strcmp(directAddressingFlag,))
+                asdasdasd
+            */
             
             if(Flags.startFlag == 0) {
                 fprintf(outputFile,"H%-6s%06X%06X\n",token,node->address,address - node->address);
                 Flags.startFlag = 1;
             }
 
-            fprintf(outputFile,"T ");
+            //fprintf(outputFile,"T%06X%02X",node->address,);
         }
     }
 
