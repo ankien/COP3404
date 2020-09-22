@@ -21,7 +21,7 @@ uint16_t hashFunction(char* symbol) {
     for(uint64_t i = 0; i < strlen(symbol); i++) {
         hash += symbol[i];
     }
-    return (hash * 3) % HASHSIZE;
+    return (hash * 60) % HASHSIZE;
 }
 
 void insertNode(char* symbol, uint16_t address) {
@@ -364,9 +364,32 @@ int main(uint8_t argc, char* argv[]) {
         }
     }
 
-    fclose(inputFile);
-
     // Pass 2
+    Flags.startFlag = 0;
     lineCount = 0;
+    rewind(inputFile);
+    char* outputFilename = strcat(strtok(argv[1],"."),".obj");
+    FILE* outputFile = fopen(outputFilename,"w");
+    
+    while(fgets(line,1024,inputFile)) {
+        lineCount++;
+        if(line[0] == '#')
+            continue;
+
+        if((line[0] >= 'A') && (line[0] <= 'Z')) {
+            char* token = strtok(line," \t");
+            struct Node* node = findNode(token);
+            
+            if(Flags.startFlag == 0) {
+                fprintf(outputFile,"H%-6s%06X%06X\n",token,node->address,address - node->address);
+                Flags.startFlag = 1;
+            }
+
+            fprintf(outputFile,"T ");
+        }
+    }
+
+    fclose(outputFile);
+    fclose(inputFile);
     return 0;
 }
