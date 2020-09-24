@@ -316,7 +316,7 @@ int main(uint8_t argc, char* argv[]) {
                         case 'X':
                             for(uint64_t i = 2; (byteString[i] != '\'') && (i<strlen(byteString)); i++) {
                                 if(strchr("0123456789abcdefABCDEF", byteString[i]) != NULL) {
-                                    if((i % 2) == 1) {
+                                    if((i % 2) == 0) {
                                         address+=1;
                                         if(address > 32768) {
                                             printError(nonNullTerminatedStringString,lineCount,"Out of memory");
@@ -364,6 +364,7 @@ int main(uint8_t argc, char* argv[]) {
     Flags.startFlag = 0, lineCount = 0;
     rewind(inputFile);
     uint16_t currentAddress = 0;
+    uint8_t bytesInRecord = 3;
     char* outputFilename = strcat(strtok(argv[1],"."),".obj");
     FILE* outputFile = fopen(outputFilename,"w");
     
@@ -371,23 +372,26 @@ int main(uint8_t argc, char* argv[]) {
         lineCount++;
         if(line[0] == '#')
             continue;
+            
+        char* token = strtok(line," \t");
 
         if((line[0] >= 'A') && (line[0] <= 'Z')) {
-            char* token = strtok(line," \t"), directAddressingFlag = strtok(line,",");
+            char* opcode = strtok(NULL," \t");
             struct Node* node = findNode(token);
-
-            /*
-            if(strcmp(directAddressingFlag,))
-                asdasdasd
-            */
             
             if(Flags.startFlag == 0) {
                 fprintf(outputFile,"H%-6s%06X%06X\n",token,node->address,address - node->address);
+                currentAddress = node->address;
                 Flags.startFlag = 1;
             }
 
-            //fprintf(outputFile,"T%06X%02X",node->address,);
+
+        } else {
+            
+
         }
+        
+        fprintf(outputFile,"T%06X%02X",,);
     }
 
     fclose(outputFile);
