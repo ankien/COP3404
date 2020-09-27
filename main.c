@@ -64,6 +64,7 @@ void removeNewLine(char* string) {
     }
 }
 
+// This function is redundant if you check opcodes in pass 2, but nobody told me so w/e
 uint8_t checkIfOpcode(char* string) { // Better performance could be achieved if you switched on the first character of the string
     if((strcmp(string,"ADD") == 0) || (strcmp(string,"ADDF") == 0) || (strcmp(string,"ADDR") == 0) || (strcmp(string,"AND") == 0) ||
        (strcmp(string,"CLEAR") == 0) || (strcmp(string,"COMP") == 0) || (strcmp(string,"COMPF") == 0) || (strcmp(string,"COMPR") == 0) ||
@@ -92,8 +93,125 @@ uint8_t checkIfDirective(char* string) {
     return 1;
 }
 
-uint8_t checkIfConstant() {
-
+// i'm sorry
+uint8_t getOpcodeValue(char* string) {
+    if(strcmp(string,"ADD") == 0)
+        return 0x18;
+    if(strcmp(string,"ADDF") == 0)
+        return 0x58;
+    if(strcmp(string,"ADDR") == 0)
+        return 0x90;
+    if(strcmp(string,"AND") == 0)
+        return 0x40;
+    if(strcmp(string,"CLEAR") == 0)
+        return 0xB4;
+    if(strcmp(string,"COMP") == 0)
+        return 0x28;
+    if(strcmp(string,"COMPF") == 0)
+        return 0x88;
+    if(strcmp(string,"COMPR") == 0)
+        return 0xA0;
+    if(strcmp(string,"DIV") == 0)
+        return 0x24;
+    if(strcmp(string,"DIVF") == 0)
+        return 0x64;
+    if(strcmp(string,"DIVR") == 0)
+        return 0x9C;
+    if(strcmp(string,"FIX") == 0)
+        return 0xC4;
+    if(strcmp(string,"FLOAT") == 0)
+        return 0xC0;
+    if(strcmp(string,"HIO") == 0)
+        return 0xF4;
+    if(strcmp(string,"J") == 0)
+        return 0x3C;
+    if(strcmp(string,"JEQ") == 0)
+        return 0x30;
+    if(strcmp(string,"JGT") == 0)
+        return 0x34;
+    if(strcmp(string,"JLT") == 0)
+        return 0x38;
+    if(strcmp(string,"JSUB") == 0)
+        return 0x48;
+    if(strcmp(string,"LDA") == 0)
+        return 0x00;
+    if(strcmp(string,"LDB") == 0)
+        return 0x68;
+    if(strcmp(string,"LDCH") == 0)
+        return 0x50;
+    if(strcmp(string,"LDF") == 0)
+        return 0x70;
+    if(strcmp(string,"LDL") == 0)
+        return 0x08;
+    if(strcmp(string,"LDS") == 0)
+        return 0x6C;
+    if(strcmp(string,"LDT") == 0)
+        return 0x74;
+    if(strcmp(string,"LDX") == 0)
+        return 0x04;
+    if(strcmp(string,"LPS") == 0)
+        return 0xD0;
+    if(strcmp(string,"MUL") == 0)
+        return 0x20;
+    if(strcmp(string,"MULF") == 0)
+        return 0x60;
+    if(strcmp(string,"MULR") == 0)
+        return 0x98;
+    if(strcmp(string,"NORM") == 0)
+        return 0xC8;
+    if(strcmp(string,"OR") == 0)
+        return 0x44;
+    if(strcmp(string,"RD") == 0)
+        return 0xD8;
+    if(strcmp(string,"RMO") == 0)
+        return 0xAC;
+    if(strcmp(string,"RSUB") == 0)
+        return 0x4C;
+    if(strcmp(string,"SHIFTL") == 0)
+        return 0xA4;
+    if(strcmp(string,"SHIFTR") == 0)
+        return 0xA8;
+    if(strcmp(string,"SSK") == 0)
+        return 0xEC;
+    if(strcmp(string,"STA") == 0)
+        return 0x0C;
+    if(strcmp(string,"STB") == 0)
+        return 0x78;
+    if(strcmp(string,"STCH") == 0)
+        return 0x54;
+    if(strcmp(string,"STF") == 0)
+        return 0x80;
+    if(strcmp(string,"STI") == 0)
+        return 0xD4;
+    if(strcmp(string,"STL") == 0)
+        return 0x14;
+    if(strcmp(string,"STS") == 0)
+        return 0x7C;
+    if(strcmp(string,"STSW") == 0)
+        return 0xE8;
+    if(strcmp(string,"STT") == 0)
+        return 0x84;
+    if(strcmp(string,"STX") == 0)
+        return 0x10;
+    if(strcmp(string,"SUB") == 0)
+        return 0x1C;
+    if(strcmp(string,"SUBF") == 0)
+        return 0x5C;
+    if(strcmp(string,"SUBR") == 0)
+        return 0x94;
+    if(strcmp(string,"SVC") == 0)
+        return 0xB0;
+    if(strcmp(string,"TD") == 0)
+        return 0xE0;
+    if(strcmp(string,"TIO") == 0)
+        return 0xF8;
+    if(strcmp(string,"TIX") == 0)
+        return 0x2C;
+    if(strcmp(string,"TIXR") == 0)
+        return 0xB8;
+    if(strcmp(string,"WD") == 0)
+        return 0xDC;
+    return 0xFF;
 }
 
 void printError(char* line,uint64_t lineNumber, char* error) {
@@ -361,37 +479,60 @@ int main(uint8_t argc, char* argv[]) {
     }
 
     // Pass 2
-    Flags.startFlag = 0, lineCount = 0;
+    Flags.startFlag = 0, Flags.endFlag = 0, Flags.symbolFlag = 0, lineCount = 0;
     rewind(inputFile);
-    uint16_t currentAddress = 0;
+    uint16_t currentAddress = 0, startingAddress = 0;
     uint8_t bytesInRecord = 3;
     char* outputFilename = strcat(strtok(argv[1],"."),".obj");
     FILE* outputFile = fopen(outputFilename,"w");
     
     while(fgets(line,1024,inputFile)) {
+        strcpy(nonNullTerminatedStringString,line);
+        for(uint64_t i = 0; i < strlen(line); i++) {
+            if(nonNullTerminatedStringString[i] == '\0')
+                nonNullTerminatedStringString[i]=' ';
+            else if(nonNullTerminatedStringString[i] == '\n')
+                nonNullTerminatedStringString[i]='\0';
+        }
+
         lineCount++;
         if(line[0] == '#')
             continue;
             
-        char* token = strtok(line," \t");
+        char* token = strtok(line," \t"); // either a symbol or an opcode
 
         if((line[0] >= 'A') && (line[0] <= 'Z')) {
+            Flags.symbolFlag = 1;
             char* opcode = strtok(NULL," \t");
             struct Node* node = findNode(token);
             
             if(Flags.startFlag == 0) {
-                fprintf(outputFile,"H%-6s%06X%06X\n",token,node->address,address - node->address);
+                startingAddress = node->address;
+                fprintf(outputFile,"H%-6s%06X%06X\n",token,startingAddress,address - node->address);
                 currentAddress = node->address;
                 Flags.startFlag = 1;
             }
 
 
-        } else {
+        } else { // if there's no symbol
             
 
         }
+
+        char* operand = strtok(NULL,",\t");
+        if(operand == NULL) {
+            printError(nonNullTerminatedStringString,lineCount,"Missing operand");
+            return 1;
+        }
         
-        fprintf(outputFile,"T%06X%02X",,);
+        if(Flags.endFlag == 1)
+            fprintf(outputFile,"E%06X",startingAddress);
+        else
+            fprintf(outputFile,"T%06X%02X",,bytesInRecord);
+        for() {
+            fprintf("",);
+        }
+        Flags.symbolFlag = 0;
     }
 
     fclose(outputFile);
