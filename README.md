@@ -1,6 +1,6 @@
 # COP3404
 SIC/XE Assembler Project in C for Systems Software, it generates compressed object file text records for fun<br><br>
-Uncompressed:
+Object File for test1:
 ```
 HCOPY  00100000107A
 T00100003141033
@@ -45,4 +45,3 @@ T0020760300004C
 T0020790105
 E001000
 ```
-Compressed:
