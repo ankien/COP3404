@@ -512,10 +512,11 @@ int main(uint8_t argc, char* argv[]) {
         if(line[0] == '#')
             continue;
 
-        if(strcmp(strtok(line,",\n"),"X") == 0) {
-            // error case for non-address can be handled here
-            Flags.xFlag = 1;
-        }
+        strtok(line,",\r\n");
+        char* indexedAddressingMode = strtok(NULL,",\r\n");
+        if(indexedAddressingMode != NULL)
+                // error case for non-address can be handled here
+                Flags.xFlag = 1;
 
         char* token = strtok(line, " \t");
         if((line[0] >= 'A') && (line[0] <= 'Z')) {
@@ -582,7 +583,7 @@ int main(uint8_t argc, char* argv[]) {
                         break;
                     case 'X':
                         for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
-                            fprintf(outputFile, "%X", byteString[i]);
+                            fprintf(outputFile, "%c", byteString[i]);
                         break;
                 }
                 fprintf(outputFile, "\n");
