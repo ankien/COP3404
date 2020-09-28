@@ -1,5 +1,5 @@
 # COP3404
-SIC/XE Assembler Project in C for Systems Software, it generates compressed object file text records for fun<br>
+SIC/XE Assembler Project in C for Systems Software, it generates compressed object file text records for fun<br><br>
 Uncompressed:
 ```
 HCOPY  00100000107A
