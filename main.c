@@ -288,18 +288,23 @@ int main(uint8_t argc, char* argv[]) {
         if(strlen(line) > 2) { // I guess, alternatively you could take the first token and check if it's null
             char* token = strtok(line," \t");
             if((line[0] >= 'A') && (line[0] <= 'Z')) { // Read symbol
+
                 if(findNode(token) != NULL) {
                     printError(nonNullTerminatedStringString,lineCount,"Duplicate symbol");
                     return 1;
+
                 } else if(checkIfDirective(token) == 0) {
                     printError(nonNullTerminatedStringString,lineCount,"Symbol = directive name");
                     return 1;
+
                 } else if(strlen(token) > 6) {
                     printError(nonNullTerminatedStringString,lineCount,"Symbol cannot be longer than 6 characters");
                     return 1;
+
                 } else if(stringHasSpecialChars(token) != 0) {
                     printError(nonNullTerminatedStringString,lineCount,"Symbol cannot contain spaces, $, !, =, +, -, (, ), @");
                     return 1;
+
                 } else {
                     strcpy(symbol,token);
                     Flags.symbolFlag = 1;
@@ -308,26 +313,26 @@ int main(uint8_t argc, char* argv[]) {
 
             while(token) {
                 if(strcmp(token, "START") == 0) {
-                    char* temp = strtok(NULL," \t\r\n");
+                    char* operand = strtok(NULL," \t\r\n");
 
                     if(Flags.symbolFlag == 0) {
                         printError(nonNullTerminatedStringString,lineCount,"Missing symbol for START");
                         return 1;
                     }
 
-                    if(temp == NULL) {
+                    if(operand == NULL) {
                         printError(nonNullTerminatedStringString,lineCount,"No argument provided for START");
                         return 1;
                     }
 
-                    int64_t startAddress = (uint32_t)strtol(temp,NULL,16);
+                    int64_t startAddress = (uint32_t)strtol(operand,NULL,16);
 
                     if((startAddress >= 32768) || (startAddress < 0)) {
                         printError(nonNullTerminatedStringString,lineCount,"Invalid START address");
                         return 1;
-                    } else {
+
+                    } else
                         address = startAddress;
-                    }
 
                     insertNode(symbol, address);
                     printf("%s %X\n", symbol, address);
@@ -370,39 +375,43 @@ int main(uint8_t argc, char* argv[]) {
                 } 
                 
                 if(strcmp(token, "WORD") == 0) {
-                    char* temp = strtok(NULL," \t");
-                    if((atoi(temp) > 8388607) || (atoi(temp) < -8388608)) { // 2^24 Word size
+                    char* operand = strtok(NULL," \t");
+                    if((atoi(operand) > 8388607) || (atoi(operand) < -8388608)) { // 2^24 Word size
                         printError(nonNullTerminatedStringString,lineCount,"Word constant is invalid");
                         return 1;
                     }
-                    if(temp != NULL) {
+                    if(operand != NULL) {
                         address+=3;
                         if(address > 32768) {
                             printError(nonNullTerminatedStringString,lineCount,"Out of memory");
                             return 1;
                         }
+
                     } else {
                         printError(nonNullTerminatedStringString,lineCount,"No argument provided for WORD");
                         return 1;
                     }
                     break;
+
                 } else if(strcmp(token, "RESW") == 0) {
-                    char* temp = strtok(NULL," \t");
-                    if(temp != NULL) {
-                        address+= (3*atoi(temp));
+                    char* operand = strtok(NULL," \t");
+                    if(operand != NULL) {
+                        address+= (3*atoi(operand));
                         if(address > 32768) {
                             printError(nonNullTerminatedStringString,lineCount,"Out of memory");
                             return 1;
                         }
+
                     } else {
                         printError(nonNullTerminatedStringString,lineCount,"No argument provided for RESW");
                         return 1;
                     }
                     break;
+
                 } else if(strcmp(token, "RESB") == 0) {
-                    char* temp = strtok(NULL," \t");
-                    if(temp != NULL) {
-                        address+= atoi(temp);
+                    char* operand = strtok(NULL," \t");
+                    if(operand != NULL) {
+                        address+= atoi(operand);
                         if(address > 32768) {
                             printError(nonNullTerminatedStringString,lineCount,"Out of memory");
                             return 1;
@@ -412,6 +421,7 @@ int main(uint8_t argc, char* argv[]) {
                         return 1;
                     }
                     break;
+
                 } else if(strcmp(token, "BYTE") == 0) {
                     char* byteString = strtok(NULL,"\t");
                     if(byteString == NULL) {
@@ -456,9 +466,10 @@ int main(uint8_t argc, char* argv[]) {
                 } else if(strcmp(token,"START") == 0) {
                     printError(nonNullTerminatedStringString,lineCount,"Duplicate START");
                     return 1;
+
                 } else if(strcmp(token, "END") == 0) {
-                    char* temp = strtok(NULL," \t\r\n");
-                    if(temp == NULL) {
+                    char* operand = strtok(NULL," \t\r\n");
+                    if(operand == NULL) {
                         printError(nonNullTerminatedStringString,lineCount,"No argument provided for END");
                         return 1;
                     }
@@ -483,7 +494,7 @@ int main(uint8_t argc, char* argv[]) {
     // Pass 2
     Flags.symbolFlag = 0, Flags.startFlag = 0, Flags.endFlag = 0, lineCount = 0;
     rewind(inputFile);
-    uint8_t bytesInRecord = 0;
+    uint16_t bytesInRecord = 0;
     char* outputFilename = strcat(strtok(argv[1],"."),".obj");
     FILE* outputFile = fopen(outputFilename,"w");
     
@@ -501,11 +512,9 @@ int main(uint8_t argc, char* argv[]) {
         if(line[0] == '#')
             continue;
 
-        // need to increment my address for this to work
-        uint16_t objectCodeAddress = address;
         if(strcmp(strtok(line,",\n"),"X") == 0) {
+            // error case for non-address can be handled here
             Flags.xFlag = 1;
-            objectCodeAddress |= 0x8000;
         }
 
         char* token = strtok(line, " \t");
@@ -516,8 +525,8 @@ int main(uint8_t argc, char* argv[]) {
 
         while(token) {
             if(strcmp(token, "START") == 0) {
-                char* temp = strtok(NULL, " \t\n");
-                int64_t startAddress = (uint32_t)strtol(temp, NULL, 16);
+                char* operand = strtok(NULL, " \t\r\n");
+                int64_t startAddress = (uint32_t)strtol(operand, NULL, 16);
 
                 uint16_t programLengthInBytes = address - startAddress;
                 address = startAddress;
@@ -528,7 +537,8 @@ int main(uint8_t argc, char* argv[]) {
                 break;
             }
 
-            if((Flags.symbolFlag == 0) && (Flags.startFlag == 1) && (strcmp(token,"END") != 0))
+            if((Flags.symbolFlag == 0) && (Flags.startFlag == 1) && (strcmp(token,"END") != 0) && (strcmp(token,"RESB") != 0)
+            && (strcmp(token,"RESW") != 0))
                 fprintf(outputFile,"T%06X",address);
 
             char* newLinelessToken = (char*)malloc(strlen(token) + 1);
@@ -538,30 +548,63 @@ int main(uint8_t argc, char* argv[]) {
             free(newLinelessToken);
 
             if(strcmp(token, "WORD") == 0) {
+                char* operand = strtok(NULL," \t\r\n");
                 bytesInRecord += 3;
-                fprintf(outputFile,"%02X%06X\n",bytesInRecord,);
+                fprintf(outputFile,"%02X%06X\n",bytesInRecord,atoi(operand));
+
             } else if(strcmp(token, "RESW") == 0) {
-                char* temp = strtok(NULL, " \t");
-                bytesInRecord += (3 * atoi(temp));
+                char* operand = strtok(NULL, " \t");
+                bytesInRecord += (3 * atoi(operand));
+
             } else if(strcmp(token, "RESB") == 0) {
-                char* temp = strtok(NULL, " \t");
-                bytesInRecord += atoi(temp);
+                char* operand = strtok(NULL, " \t");
+                bytesInRecord += atoi(operand);
+
             } else if(strcmp(token, "BYTE") == 0) {
                 char* byteString = strtok(NULL, "\t");
                 switch(byteString[0]) {
                     case 'C':
                         for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
                             bytesInRecord += 1;
+                        break;
                     case 'X':
                         for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
                             if((i % 2) == 0)
                                 bytesInRecord += 1;
+                        break;
                 }
+
+                fprintf(outputFile, "%02X", bytesInRecord);
+                switch(byteString[0]) {
+                    case 'C':
+                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
+                            fprintf(outputFile, "%02X", (int)byteString[i]);
+                        break;
+                    case 'X':
+                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
+                            fprintf(outputFile, "%X", byteString[i]);
+                        break;
+                }
+                fprintf(outputFile, "\n");
+
             } else if(opcodeValue != 0xFF) {
+                char* operand = strtok(NULL, " \t\r\n");
+                if(operand == NULL) {
+                    bytesInRecord += 3;
+                    fprintf(outputFile,"%02X%06X\n",bytesInRecord,opcodeValue);
+
+                } else {
+                struct Node* node = findNode(operand);
+                uint16_t objectCodeAddress = node->address;
+                if(Flags.xFlag)
+                    objectCodeAddress |= 0x8000;
                 bytesInRecord += 3;
+                fprintf(outputFile,"%02X%02X%04X\n",bytesInRecord,opcodeValue,objectCodeAddress);
+                }
+
             } else if(strcmp(token, "END") == 0) {
-                char* temp = strtok(NULL, " \t\r\n");
-                struct Node* node = findNode(temp);
+                char* operand = strtok(NULL, " \t\r\n");
+                struct Node* node = findNode(operand);
                 fprintf(outputFile,"E%06X",node->address);
                 break;
             }
