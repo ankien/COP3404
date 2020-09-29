@@ -335,7 +335,7 @@ int main(uint8_t argc, char* argv[]) {
                         address = startAddress;
 
                     insertNode(symbol, address);
-                    printf("%s %X\n", symbol, address);
+                    // printf("%s %X\n", symbol, address);
                     Flags.symbolFlag = 0;
                     Flags.startFlag = 1;
                     break;
@@ -349,7 +349,7 @@ int main(uint8_t argc, char* argv[]) {
                 // print symbol and the address it's located at
                 if((Flags.symbolFlag == 1) && (Flags.startFlag == 1)) {
                     insertNode(symbol, address);
-                    printf("%s %X\n", symbol, address);
+                    // printf("%s %X\n", symbol, address);
                 }
 
                 char* newLinelessToken = (char*)malloc(strlen(token) + 1);
@@ -494,19 +494,11 @@ int main(uint8_t argc, char* argv[]) {
     // Pass 2
     Flags.symbolFlag = 0, Flags.startFlag = 0, Flags.endFlag = 0, lineCount = 0;
     rewind(inputFile);
-    uint16_t bytesInRecord = 0;
+    uint16_t bytesInObjectCode = 0, bytesInTextRecord = 0, programLengthInBytes = 0;
     char* outputFilename = strcat(strtok(argv[1],"."),".obj");
     FILE* outputFile = fopen(outputFilename,"w");
     
     while(fgets(line,1024,inputFile)) {
-        strcpy(nonNullTerminatedStringString,line);
-        for(uint64_t i = 0; i < strlen(line); i++) {
-            if(nonNullTerminatedStringString[i] == '\0')
-                nonNullTerminatedStringString[i]=' ';
-            else if(nonNullTerminatedStringString[i] == '\n')
-                nonNullTerminatedStringString[i]='\0';
-        }
-
         lineCount++;
 
         if(line[0] == '#')
@@ -550,32 +542,32 @@ int main(uint8_t argc, char* argv[]) {
 
             if(strcmp(token, "WORD") == 0) {
                 char* operand = strtok(NULL," \t\r\n");
-                bytesInRecord += 3;
-                fprintf(outputFile,"%02X%06X\n",bytesInRecord,atoi(operand));
+                bytesInObjectCode += 3;
+                fprintf(outputFile,"%02X%06X\n",bytesInObjectCode,atoi(operand));
 
             } else if(strcmp(token, "RESW") == 0) {
                 char* operand = strtok(NULL, " \t");
-                bytesInRecord += (3 * atoi(operand));
+                bytesInObjectCode += (3 * atoi(operand));
 
             } else if(strcmp(token, "RESB") == 0) {
                 char* operand = strtok(NULL, " \t");
-                bytesInRecord += atoi(operand);
+                bytesInObjectCode += atoi(operand);
 
             } else if(strcmp(token, "BYTE") == 0) {
                 char* byteString = strtok(NULL, "\t");
                 switch(byteString[0]) {
                     case 'C':
                         for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
-                            bytesInRecord += 1;
+                            bytesInObjectCode += 1;
                         break;
                     case 'X':
                         for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
                             if((i % 2) == 0)
-                                bytesInRecord += 1;
+                                bytesInObjectCode += 1;
                         break;
                 }
 
-                fprintf(outputFile, "%02X", bytesInRecord);
+                fprintf(outputFile, "%02X", bytesInObjectCode);
                 switch(byteString[0]) {
                     case 'C':
                         for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
@@ -591,30 +583,40 @@ int main(uint8_t argc, char* argv[]) {
             } else if(opcodeValue != 0xFF) {
                 char* operand = strtok(NULL, " \t\r\n");
                 if(operand == NULL) {
-                    bytesInRecord += 3;
-                    fprintf(outputFile,"%02X%06X\n",bytesInRecord,opcodeValue);
+                    bytesInObjectCode += 3;
+                    fprintf(outputFile,"%02X%X0000\n",bytesInObjectCode,opcodeValue);
 
                 } else {
                 struct Node* node = findNode(operand);
+                if(node == NULL) {
+                    printError(nonNullTerminatedStringString,lineCount,"Invalid symbol passed as an operand");
+                    return 1;
+                }
+
                 uint16_t objectCodeAddress = node->address;
                 if(Flags.xFlag)
                     objectCodeAddress |= 0x8000;
-                bytesInRecord += 3;
-                fprintf(outputFile,"%02X%02X%04X\n",bytesInRecord,opcodeValue,objectCodeAddress);
+                bytesInObjectCode += 3;
+                fprintf(outputFile,"%02X%02X%04X\n",bytesInObjectCode,opcodeValue,objectCodeAddress);
                 }
 
             } else if(strcmp(token, "END") == 0) {
                 char* operand = strtok(NULL, " \t\r\n");
                 struct Node* node = findNode(operand);
+                if(node == NULL) {
+                    printError(nonNullTerminatedStringString,lineCount,"Invalid symbol passed as an operand");
+                    return 1;
+                }
+
                 fprintf(outputFile,"E%06X",node->address);
                 break;
             }
 
-            address += bytesInRecord;
+            address += bytesInObjectCode;
             if(Flags.startFlag) {
                 Flags.symbolFlag = 0;
                 Flags.xFlag = 0;
-                bytesInRecord = 0;
+                bytesInObjectCode = 0;
             }
             token = strtok(NULL, " \t");
         }

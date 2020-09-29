@@ -10,3 +10,12 @@ I made sure to free the memory aside from the chunks allocated for the hashtable
 I've handled the following error cases:
 Duplicate symbol, Invalid symbol, Invalid hex or char constants, Duplicate START and END, Directive missing required parameters (START, END)
 Program out of memory, Word constant too large, Missing or incorrectly formatted START directive
+
+Pass 2 documentation:
+I wrote all the object codes for the text records correctly to my knowledge.
+I didn't bother with compressing the text records, but I acknowledge that it could be done.
+My Pass 2 assembler creates a new text record for every instruction except the ones with opcodes that reserve space (namely RESW and RESB)
+
+Since I check whether or not an opcode is valid in Pass 1, I don't have to do it for Pass 2.
+This, and passing an invalid symbol as an operand seemed to be the only error cases I found possible to check for in Pass 2.
+As a result, I check only one error in Pass 2.
