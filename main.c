@@ -341,7 +341,7 @@ int main(uint8_t argc, char* argv[]) {
                     break;
                 }
 
-                if((Flags.startFlag == 0) && Flags.symbolFlag == 0) {
+                if((Flags.startFlag == 0) && (strcmp(token, "END") == 0)) {
                     printError(nonNullTerminatedStringString,lineCount,"Missing START");
                     return 1;
                 }
@@ -499,6 +499,14 @@ int main(uint8_t argc, char* argv[]) {
     FILE* outputFile = fopen(outputFilename,"w");
     
     while(fgets(line,1024,inputFile)) {
+        strcpy(nonNullTerminatedStringString,line);
+        for(uint64_t i = 0; i < strlen(line); i++) {
+            if(nonNullTerminatedStringString[i] == '\0')
+                nonNullTerminatedStringString[i]=' ';
+            else if(nonNullTerminatedStringString[i] == '\n')
+                nonNullTerminatedStringString[i]='\0';
+        }
+
         lineCount++;
 
         if(line[0] == '#')
@@ -589,6 +597,8 @@ int main(uint8_t argc, char* argv[]) {
                 } else {
                 struct Node* node = findNode(operand);
                 if(node == NULL) {
+                    fclose(outputFile);
+                    remove(outputFilename);
                     printError(nonNullTerminatedStringString,lineCount,"Invalid symbol passed as an operand");
                     return 1;
                 }
@@ -604,6 +614,8 @@ int main(uint8_t argc, char* argv[]) {
                 char* operand = strtok(NULL, " \t\r\n");
                 struct Node* node = findNode(operand);
                 if(node == NULL) {
+                    fclose(outputFile);
+                    remove(outputFilename);
                     printError(nonNullTerminatedStringString,lineCount,"Invalid symbol passed as an operand");
                     return 1;
                 }

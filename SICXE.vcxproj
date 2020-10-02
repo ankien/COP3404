@@ -147,16 +147,27 @@
     <Text Include="Example1.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="test1.sic" />
-    <None Include="test10.sic" />
-    <None Include="test2.sic" />
-    <None Include="test3.sic" />
-    <None Include="test4.sic" />
-    <None Include="test5.sic" />
-    <None Include="test6.sic" />
-    <None Include="test7.sic" />
-    <None Include="test8.sic" />
-    <None Include="test9.sic" />
+    <None Include="clock.sic" />
+    <None Include="Pass1 Tests\test1.sic" />
+    <None Include="Pass1 Tests\test10.sic" />
+    <None Include="Pass1 Tests\test2.sic" />
+    <None Include="Pass1 Tests\test3.sic" />
+    <None Include="Pass1 Tests\test4.sic" />
+    <None Include="Pass1 Tests\test5.sic" />
+    <None Include="Pass1 Tests\test6.sic" />
+    <None Include="Pass1 Tests\test7.sic" />
+    <None Include="Pass1 Tests\test8.sic" />
+    <None Include="Pass1 Tests\test9.sic" />
+    <None Include="Pass2 Tests\test21.sic" />
+    <None Include="Pass2 Tests\test22.sic" />
+    <None Include="Pass2 Tests\test23.sic" />
+    <None Include="Pass2 Tests\test24.sic" />
+    <None Include="Pass2 Tests\test25.sic" />
+    <None Include="Pass2 Tests\test26.sic" />
+    <None Include="Pass2 Tests\test27.sic" />
+    <None Include="Pass2 Tests\test28.sic" />
+    <None Include="Pass2 Tests\test29.sic" />
+    <None Include="Pass2 Tests\test30.sic" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

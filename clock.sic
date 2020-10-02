@@ -1,0 +1,10 @@
+CLOCK	START	7E0C	# lets limit ourselves to 497 bytes of memory :)
+ZERO	WORD	0
+	LDA	
+	COMP	ZERO
+	JEQ	# jump to the correct handler for the mode
+TWENTY
+
+	J	FIN
+TWELVE
+FIN	END
