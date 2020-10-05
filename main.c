@@ -563,30 +563,80 @@ int main(uint8_t argc, char* argv[]) {
 
             } else if(strcmp(token, "BYTE") == 0) {
                 char* byteString = strtok(NULL, "\t");
+                uint64_t startOfByteString = 2;
                 switch(byteString[0]) {
                     case 'C':
-                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
+                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++) {
                             bytesInObjectCode += 1;
+
+                            if(bytesInObjectCode == 30) {
+                                if(startOfByteString != 2)
+                                    fprintf(outputFile,"T%06X",address);
+
+                                fprintf(outputFile,"%02X",bytesInObjectCode);
+
+                                for(uint64_t j = startOfByteString; j <= i; j++) {
+                                    fprintf(outputFile,"%02X",(int)byteString[j]);
+                                    startOfByteString = j;
+                                }
+
+                                fprintf(outputFile,"\n");
+                                address += bytesInObjectCode;
+                                bytesInObjectCode = 0;
+                                startOfByteString++; 
+                            }
+                        }
+
+                        if(bytesInObjectCode != 0) {
+                            if(startOfByteString != 2)
+                                fprintf(outputFile,"T%06X%02X",address,bytesInObjectCode);
+                            else
+                                fprintf(outputFile,"%02X",bytesInObjectCode);
+
+                            for(uint64_t i = startOfByteString;(byteString[i] != '\'') && (i < strlen(byteString)); i++) {
+                                fprintf(outputFile,"%02X",(int)byteString[i]);
+                                address++;
+                                bytesInObjectCode--;
+                            };
+                            fprintf(outputFile,"\n");
+                        }
                         break;
                     case 'X':
-                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
+                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++) {
                             if((i % 2) == 0)
                                 bytesInObjectCode += 1;
-                        break;
-                }
 
-                fprintf(outputFile, "%02X", bytesInObjectCode);
-                switch(byteString[0]) {
-                    case 'C':
-                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
-                            fprintf(outputFile, "%02X", (int)byteString[i]);
-                        break;
-                    case 'X':
-                        for(uint64_t i = 2; (byteString[i] != '\'') && (i < strlen(byteString)); i++)
-                            fprintf(outputFile, "%c", byteString[i]);
+                            if(bytesInObjectCode == 30) {
+                                if(startOfByteString != 2)
+                                    fprintf(outputFile,"T%06X",address);
+                                fprintf(outputFile,"%02X",bytesInObjectCode);
+                                for(uint64_t j = startOfByteString; j <= i; j++) {
+                                    fprintf(outputFile,"%c",byteString[j]);
+                                    startOfByteString = j;
+                                }
+
+                                fprintf(outputFile,"\n");
+                                address += bytesInObjectCode;
+                                bytesInObjectCode = 0;
+                                startOfByteString++; 
+                            }
+                        }
+
+                        if(bytesInObjectCode != 0) {
+                            if(startOfByteString != 2)
+                                fprintf(outputFile,"T%06X%02X",address,bytesInObjectCode);
+                            else
+                                fprintf(outputFile,"%02X",bytesInObjectCode);
+
+                            for(uint64_t i = startOfByteString;(byteString[i] != '\'') && (i < strlen(byteString)); i++)
+                                fprintf(outputFile,"%c",byteString[i]);
+
+                            address += bytesInObjectCode;
+                            bytesInObjectCode = 0;
+                            fprintf(outputFile,"\n");
+                        }
                         break;
                 }
-                fprintf(outputFile, "\n");
 
             } else if(opcodeValue != 0xFF) {
                 char* operand = strtok(NULL, " \t\r\n");
