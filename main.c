@@ -495,7 +495,11 @@ int main(uint8_t argc, char* argv[]) {
     Flags.symbolFlag = 0, Flags.startFlag = 0, Flags.endFlag = 0, lineCount = 0;
     rewind(inputFile);
     uint16_t bytesInObjectCode = 0, bytesInTextRecord = 0, programLengthInBytes = 0;
-    char* outputFilename = strcat(strtok(argv[1],"."),".obj");
+
+    int length = strlen(argv[1]) + 5;
+    char* outputFilename = malloc(length);
+    strcpy(outputFilename,argv[1]);
+    strcat(outputFilename,".obj");
     FILE* outputFile = fopen(outputFilename,"w");
     
     while(fgets(line,1024,inputFile)) {

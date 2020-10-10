@@ -1,10 +1,17 @@
-CLOCK	START	7E0C	# lets limit ourselves to 497 bytes of memory :)
-ZERO	WORD	0
-	LDA	
-	COMP	ZERO
-	JEQ	# jump to the correct handler for the mode
-TWENTY
-
+CLOCK	START	7E0C	# lets limit ourselves to 500 (497+3 for LCD) bytes of memory
+OFFSET	WORD	497	# offset from START to last word
+	LDX	OFFSET
+CHECK	WORD	8388608	# leftmost/msb of a word, 0x800000
+OUTBUF	RESB	5	# output buffer used for both formats, 1 byte for each character output
+HOURS	WORD	3600	# 60 seconds * 60 minutes
+MINS	WORD	60	# used for minute calculation below
+	LDA	CLOCK,X
+	AND	CHECK
+	COMP	CHECK
+	LDA	CLOCK,X
+	JEQ	TWENTY	# jump to the correct handler for the mode
+TWELVE	ST
 	J	FIN
-TWELVE
+TWENTY	
+	
 FIN	END
