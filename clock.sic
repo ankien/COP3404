@@ -5,13 +5,39 @@ CHECK	WORD	8388608	# leftmost/msb of a word, 0x800000
 OUTBUF	RESB	5	# output buffer used for both formats, 1 byte for each character output
 HOURS	WORD	3600	# 60 seconds * 60 minutes
 MINS	WORD	60	# used for minute calculation below
+TEN	WORD	10
+BUFFER	RESW	1	# Free word used for calculations
+BUFTWO	RESW	1
+DEVICE	WORD	64	# LCD screen device number
 	LDA	CLOCK,X
 	AND	CHECK
 	COMP	CHECK
 	LDA	CLOCK,X
 	JEQ	TWENTY	# jump to the correct handler for the mode
-TWELVE	ST
+TWELVE	
 	J	FIN
-TWENTY	
-	
+TWENTY	DIV	HOURS
+	DIV	TEN
+	WD	DEVICE	# print first H
+	MUL	TEN
+	STA	BUFFER
+	LDA	CLOCK,X
+	DIV	HOURS
+	DIV	BUFFER
+	WD	DEVICE	# print second H
+	LDA	CLOCK,X
+	DIV	HOURS
+	MUL	HOURS
+	STA	BUFFER
+	LDA	CLOCK,X
+	SUB	BUFFER
+	DIV	MINS
+	STA	BUFFER
+	DIV	TEN
+	WD	DEVICE	# print first M
+	MUL	TEN
+	STA	BUFTWO
+	LDA	BUFFER
+	DIV	BUFTWO
+	WD	DEVICE	# print second M
 FIN	END
