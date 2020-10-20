@@ -1,7 +1,7 @@
 CLOCK	START	7E0C	# lets limit ourselves to 500 (497+3 for LCD) bytes of memory
 OFFSET	WORD	497	# offset from START to last word
 	LDX	OFFSET
-CHECK	WORD	8388608	# leftmost/msb of a word, 0x800000
+CHECK	WORD	-8388608	# leftmost/msb of a word, 0x800000
 HOURS	WORD	3600	# hours in seconds, 60 seconds * 60 minutes
 MINS	WORD	60	# minutes in seconds
 THIRT	WORD	13
@@ -12,7 +12,7 @@ A	WORD	65
 P	WORD	80
 BUFFER	RESW	1	# Free word used for calculations
 BUFTWO	RESW	1
-DEVICE	WORD	64	# LCD screen device number
+DEVICE	BYTE	X'40'	# LCD screen device number
 PRINT	LDA	CLOCK,X
 	AND	CHECK
 	COMP	CHECK
