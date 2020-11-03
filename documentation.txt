@@ -20,6 +20,8 @@ Since I check whether or not an opcode is valid in Pass 1, I don't have to do it
 This, and passing an invalid symbol as an operand seemed to be the only error cases I found possible to check for in Pass 2.
 As a result, I check only one error in Pass 2.
 
-Pass 3 documentation:
+Project 3 documentation:
 My program uses 500 bytes, it uses 290 bytes of that 500 byte space if I counted correctly.
 My program is already located near the end of addressable memory starting at 0x7E0C.
+
+Project 4 documentation:

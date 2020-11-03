@@ -12,7 +12,7 @@ struct Node {
     uint16_t address;
 };
 
-#define HASHSIZE 32768 // 2^15 bytes / possible symbol locations
+#define HASHSIZE 1048576 // 2^20 bytes / possible symbol locations
 
 struct Node* hashArray[HASHSIZE];
 
@@ -219,22 +219,54 @@ void printError(char* line,uint64_t lineNumber, char* error) {
 }
 
 int main(uint8_t argc, char* argv[]) {
-    /* SIC Specifications */
+    /* SIC/XE Specifications */
     /* Memory */
-    // 8-bit bytes, 3-byte words, 32K byte limit (2^15 bytes)
+    // 8-bit bytes, 3-byte words, 1048K byte limit (2^20 bytes)
 
     /* Registers (#) */
     // All word sized:
     // A - Accumulator, for arithmetics(0)
     // X - Index register, addressing(1)
     // L - Linkage register, stores the RA from JSUB instruction(2)
+    // B - Base register, used for addressing(3)
+    // S - General working register, no special use(4)
+    // T - Another general register(5)
+    // F - Floating-point accumulator, 48 bits(6)
+    // ?? (7)
     // PC - Program Counter, contains address of next instruction to be fetched(8)
     // SW - Status Word, contains a variety of info, including Condition Code(CC)(9)
 
     /* Data/Instruction Formats */
     // All integers are 24-bit signed, Characters are 8-bit ascii coded, SIC has no support for floating point
-    // Instruction format(24-bit): opcode(8)-x,addressing mode(1)-address(15)
-    // If x = 0; target address(TA) = address. If x = 1; TA = address + offset
+    // Instruction format (24-bit): opcode(8) - x, addressing mode(1) - address(15)
+    //                     (8-bit): op(8)
+    //                    (16-bit): op(8) - r1(4) - r2(4)
+    //                    (24-bit): op(6) - nixbpe(all 1) - disp(12)
+    //                    (32-bit): op(6) - nixbpe(all 1) - address(20)
+    //        Data format (48-bit): s(1), sign - exponent(11) - fraction(36)
+
+    /* Addressing Modes */
+    //  Direct; if x = 0 or (b = 0 and p = 0), TA = address
+    // Indexed; if x = 1 or (b = 0 and p = 0), TA = address + (x)
+    //            Base relative; if b = 1 and p = 0, TA = (B) + displacement (0 <= disp <= 4095)
+    // Program-counter relative; if b = 0 and p = 1, TA = (PC) + displacement (-2048 <= disp <= 2047)
+    
+    /* Interrupt Classes */
+    //    type    - address of work area - interruption code
+    // 1. SVC     - 100 - Code from SVC instruction
+    // 2. Program - 130 - Conditional
+    // 3. Timer   - 160 - None
+    // 4. I/O     - 190 - Channel number
+
+    /* SVC Codes */
+    //    mnemonic - register parameters
+    // 0. WAIT     - (A) = address of ESB for event
+    // 1. SIGNAL   - (A) = address of ESB for event
+    // 2. I/O      - (A) = address of channel program
+    //               (S) = channel number
+    //               (T) = address of ESB for I/O operation
+    // 3. REQUEST  - (T) = address of resource name
+    // 4. RELEASE  - (T) = address of resource name
 
     /* Other Quirks */
     // I/O operations are performed one byte at a time to or from the rightmost 8-bits of register A
