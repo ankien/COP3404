@@ -295,9 +295,9 @@ int main(uint8_t argc, char* argv[]) {
     uint16_t address = 0;
     struct { // Flags for pass 1 and 2
         uint8_t symbolFlag : 1, // this token is a symbol
-                startFlag : 1, // the program has started
-                endFlag : 1, // there's an end
-                xFlag : 1; // this instruction uses indexed addressing
+                startFlag  : 1, // the program has started
+                endFlag    : 1, // there's an end
+                xFlag      : 1; // this instruction uses indexed addressing
     } Flags;
     Flags.symbolFlag = 0, Flags.startFlag = 0, Flags.endFlag = 0, Flags.xFlag = 0;
     char symbol[7], line[1024], nonNullTerminatedStringString[1024];
