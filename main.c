@@ -297,9 +297,12 @@ int main(uint8_t argc, char* argv[]) {
         uint8_t symbolFlag : 1, // this token is a symbol
                 startFlag  : 1, // the program has started
                 endFlag    : 1, // there's an end
-                xFlag      : 1; // this instruction uses indexed addressing
+                xFlag      : 1, // this instruction uses indexed addressing, can be combined with other modes
+                bFlag      : 1, // this instruction might use base relative addressing
+                pFlag      : 1; // this instruction might use program-counter relative addressing
     } Flags;
-    Flags.symbolFlag = 0, Flags.startFlag = 0, Flags.endFlag = 0, Flags.xFlag = 0;
+    Flags.symbolFlag = 0, Flags.startFlag = 0, Flags.endFlag = 0, Flags.xFlag = 0, Flags.bFlag = 0,
+    Flags.pFlag = 0;
     char symbol[7], line[1024], nonNullTerminatedStringString[1024];
 
     while(fgets(line,1024,inputFile)) {
@@ -549,10 +552,16 @@ int main(uint8_t argc, char* argv[]) {
             continue;
 
         strtok(line,",\r\n");
-        char* indexedAddressingMode = strtok(NULL,",\r\n");
-        if(indexedAddressingMode != NULL)
-                // error case for non-address can be handled here
+        char* addressingMode = strtok(NULL,",\r\n");
+        if(addressingMode != NULL) {
+            if(addressingMode[0] == 'X')
                 Flags.xFlag = 1;
+            if(addressingMode[0] == 'B')
+                Flags.bFlag = 1;
+            if(addressingMode[0] == 'P')
+                Flags.pFlag = 1;
+        }
+        
 
         char* token = strtok(line, " \t");
         if((line[0] >= 'A') && (line[0] <= 'Z')) {
