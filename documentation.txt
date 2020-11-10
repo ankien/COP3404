@@ -21,7 +21,7 @@ This, and passing an invalid symbol as an operand seemed to be the only error ca
 As a result, I check only one error in Pass 2.
 
 Project 3 documentation:
-My program uses 500 bytes, it uses 315 bytes of that 500 byte space if I counted correctly.
+My program uses 500 bytes, it uses 351 bytes of that 500 byte space if I counted correctly.
 Since I use indexed addressing from the start address to access the last word of memory,
 I don't have to worry about my entire program size.
 My program is already located near the end of addressable memory starting at 0x7E0C.
