@@ -1,5 +1,5 @@
 # COP3404
-SIC/XE Assembler Project in C for Systems Software.<br><br>
+SIC Assembler Project in C for Systems Software.<br><br>
 Example Object File for test1:
 ```
 HCOPY  00100000107A
